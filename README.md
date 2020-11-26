@@ -15,12 +15,14 @@ zonar take home interview
 
 # TODO:
 1. Setup DB and first models
-    a. postgresql via docker-compose
-    b. Flask-SQLAlchemy
-    c. User model
-    d. Book model
+    - [x] postgresql via docker-compose
+    - [x] Flask-SQLAlchemy
+    - [ ] User model
+    - [ ] Book model
 2. Setup Wishlist model/table [depends on answers to above questions]
 3. Setup Wishlist endpoints
 4. Dockerize Flask App
 5. docker-compose entire application
-6. Create "dev" vs. "prod" configurations
+6. Write Up
+7. Create "dev" vs. "prod" configurations
+8. Linting with black

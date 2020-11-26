@@ -1,8 +1,4 @@
-# TODO:
-# build: create venv, install requirements
-# run: run app
-# test: run tests
-# clean: clean all assets
+.PHONY: build run test down clean
 
 venv_dir := venv
 python := $(venv_dir)/bin/python
@@ -17,7 +13,7 @@ flask := $(venv_dir)/bin/flask
 
 build: .build
 
-run: .build run-db
+run: .build .run-db
 	env FLASK_APP=src DATABASE_URL=postgresql://dev:password1@db:5432/app_dev \
 		$(flask) run
 
@@ -31,6 +27,7 @@ test:
 	$(python) -m pytest
 
 down:
+	rm .run-db && \
 	docker-compose down
 
 clean: down
