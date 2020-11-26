@@ -2,12 +2,25 @@ version: '3.7'
 
 services:
   api:
-    build: ./
+    build:
+      context: ./
+      target: base
     command: python manage.py run -h 0.0.0.0
     volumes:
       - ./src/:/usr/src/
     ports:
       - 5000:5000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  api-test:
+    build:
+      context: ./
+      target: test
+    command: python -m pytest
+    volumes:
+      - ./src/:/usr/src/
     env_file:
       - ./.env.dev
     depends_on:

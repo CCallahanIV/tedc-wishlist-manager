@@ -1,8 +1,9 @@
 import pytest
 
-from app.hello import app
+from api import create_app
 
 
 @pytest.fixture
 def client():
+    app = create_app()
     yield app.test_client()

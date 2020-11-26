@@ -1,4 +1,4 @@
-.PHONY: build run test down clean
+.PHONY: build run run-api test down clean
 
 venv_dir := venv
 python := $(venv_dir)/bin/python
@@ -6,31 +6,27 @@ pip := $(venv_dir)/bin/pip
 flask := $(venv_dir)/bin/flask
 
 
-.build:
+build:
 	python3 -m venv venv
-	$(pip) install -r requirements.txt
+	$(pip) install --no-cache -r requirements.txt
 	touch .build
 
-build: .build
+run: run-db run-api
 
-run: .build .run-db
-	env FLASK_APP=src DATABASE_URL=postgresql://dev:password1@db:5432/app_dev \
-		$(flask) run
+run-api:
+	docker-compose up api
 
-.run-db:
+run-api-test: run-db
+	docker-compose up --build api-test
+
+run-db:
 	docker-compose up -d db
-	touch .run-db
 
-run-db: .run-db
-
-test:
-	$(python) -m pytest
+test: run-api-test
+	docker-compose down -v
 
 down:
-	rm -f .run-db && \
-	docker-compose down
+	docker-compose down -v
 
 clean: down
-	rm -f .build && \
-	rm -f .run-db && \
 	rm -rf $(venv_dir)

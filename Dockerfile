@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.9.0-slim-buster
+FROM python:3.9.0-slim-buster AS base
 
 # set work directory
 WORKDIR /usr/src/
@@ -14,4 +14,10 @@ COPY ./requirements.txt /usr/src/requirements.txt
 RUN pip install -r requirements.txt
 
 # copy project
-COPY . .
+COPY ./src/ .
+
+# TODO: make the test directory a part of this staged build.
+FROM base as test
+
+COPY ./requirements_dev.txt /usr/src/requirements_dev.txt
+RUN pip install -r requirements_dev.txt
