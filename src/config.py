@@ -1,3 +1,5 @@
+import os
+
 class Config(object):
     SQLALCHEMY_DATABSE_URI = os.getenv("DATABASE_URL", "sqlite://")
 
