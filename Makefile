@@ -15,7 +15,12 @@ build:
 	$(pip) install -r requirements.txt
 
 run:
-	env FLASK_APP=app/hello.py $(flask) run
+	env FLASK_APP=app/hello.py && \
+	env DATABASE_URL=postgresql://dev:password1@db:5432/app_dev && \
+	$(flask) run
+
+run-db:
+	docker-compose up 
 
 test:
 	$(python) -m pytest

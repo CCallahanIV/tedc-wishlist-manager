@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=password1
+      - POSTGRES_DB=app_dev
+
+volumes:
+  db_data:
