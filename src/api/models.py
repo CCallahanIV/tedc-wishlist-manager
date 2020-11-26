@@ -11,13 +11,17 @@ https://stackoverflow.com/questions/183042/how-can-i-use-uuids-in-sqlalchemy
 db = SQLAlchemy()
 
 
+def get_uuid():
+    return str(uuid.uuid4())
+
+
 class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4,
+        default=get_uuid,
         unique=True,
         nullable=False
     )
@@ -36,7 +40,7 @@ class Book(db.Model):
     id = db.Column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4,
+        default=get_uuid,
         unique=True,
         nullable=False
     )

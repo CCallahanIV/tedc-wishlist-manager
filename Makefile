@@ -27,10 +27,10 @@ test:
 	$(python) -m pytest
 
 down:
-	rm .run-db && \
+	rm -f .run-db && \
 	docker-compose down
 
 clean: down
-	rm -rf .build && \
-	rm -rf .run-db && \
+	rm -f .build && \
+	rm -f .run-db && \
 	rm -rf $(venv_dir)
