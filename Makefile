@@ -16,13 +16,11 @@ run: run-db run-api
 run-api:
 	docker-compose up api
 
-run-api-test: run-db
-	docker-compose up --build api-test
-
 run-db:
 	docker-compose up -d db
 
-test: run-api-test
+test:
+	docker-compose run api-test
 	docker-compose down -v
 
 down:

@@ -14,10 +14,12 @@ COPY ./requirements.txt /usr/src/requirements.txt
 RUN pip install -r requirements.txt
 
 # copy project
-COPY ./src/ .
+COPY ./src/manage.py .
+COPY ./src/api .
 
 # TODO: make the test directory a part of this staged build.
 FROM base as test
 
 COPY ./requirements_dev.txt /usr/src/requirements_dev.txt
 RUN pip install -r requirements_dev.txt
+COPY ./src/tests .

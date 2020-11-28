@@ -21,8 +21,8 @@ zonar take home interview
     - [x] Book model
 2. Setup Wishlist model/table [depends on answers to above questions]
 3. Setup Wishlist endpoints
-~~4. Dockerize Flask App~~
-5. docker-compose entire application
+4. ~~Dockerize Flask App~~
+5. ~~docker-compose entire application~~
 6. Write Up
 7. Create "dev" vs. "prod" configurations
 8. Linting with black
