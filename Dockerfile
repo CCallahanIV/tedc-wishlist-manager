@@ -8,16 +8,21 @@ WORKDIR /usr/src/
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+# install system dependencies
+RUN apt-get update && apt-get install -y netcat
+
 # install dependencies
 RUN pip install --upgrade pip
 COPY ./requirements.txt /usr/src/requirements.txt
 RUN pip install -r requirements.txt
 
 # copy project
+COPY entrypoint.sh .
 COPY ./src/manage.py .
 COPY ./src/api .
 
-# TODO: make the test directory a part of this staged build.
+ENTRYPOINT [ "entrypoint.sh" ]
+
 FROM base as test
 
 COPY ./requirements_dev.txt /usr/src/requirements_dev.txt

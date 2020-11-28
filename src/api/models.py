@@ -1,14 +1,12 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+
+from api import db
 
 """
 Resource for how to use UUIDs as Primary Keys:
 https://stackoverflow.com/questions/183042/how-can-i-use-uuids-in-sqlalchemy
 """
-
-
-db = SQLAlchemy()
 
 
 def get_uuid():
