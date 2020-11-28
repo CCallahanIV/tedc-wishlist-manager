@@ -20,6 +20,7 @@ run-db:
 	docker-compose up -d db
 
 test:
+	# TODO: How to clean up all containers on a failed test run?
 	docker-compose run api-test
 	docker-compose down -v
 

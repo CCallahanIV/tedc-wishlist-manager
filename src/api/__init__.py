@@ -9,7 +9,13 @@ from api.routes import bp
 db = SQLAlchemy()
 
 
-def create_app():
+def create_app() -> Flask:
+    """Using the `factory` pattern, return an initialized instance of the Flask app that will persist
+    for a single request/response lifecycle.
+
+    Returns:
+        Flask: instance of the Flask app with registered Blueprints and initialized Database.
+    """
     app = Flask(__name__)
     app.config.from_object(Config)
     app.register_blueprint(bp)
