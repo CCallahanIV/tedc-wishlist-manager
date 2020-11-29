@@ -3,11 +3,11 @@ version: '3.7'
 services:
   api:
     build:
-      context: ./
+      context: ./src/wishlist
       target: base
     command: python manage.py run -h 0.0.0.0
     volumes:
-      - ./src/:/usr/src/
+      - ./src/wishlist:/usr/src/
     ports:
       - 5000:5000
     env_file:
@@ -16,11 +16,11 @@ services:
       - db
   api-test:
     build:
-      context: ./
+      context: ./src/wishlist
       target: test
     command: python -m pytest
     volumes:
-      - ./src/:/usr/src/
+      - ./src/wishlist:/usr/src/
     env_file:
       - ./.env.dev
     depends_on:

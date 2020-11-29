@@ -1,12 +1,14 @@
 from flask import Flask, jsonify
+from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
-from api.config import Config
-from api.routes import bp
+from app.config import Config
+from app.routes import bp
 
 
 # Initialize extensions, at this point they are not attached to the application.
 db = SQLAlchemy()
+bcrypt = Bcrypt()
 
 
 def create_app() -> Flask:
@@ -23,5 +25,6 @@ def create_app() -> Flask:
     # Explanation for initializing database in this way:
     # https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/#factories-extensions
     db.init_app(app)
+    bcrypt.init_app(app)
 
     return app

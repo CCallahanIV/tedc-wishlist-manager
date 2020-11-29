@@ -17,14 +17,11 @@ COPY ./requirements.txt /usr/src/requirements.txt
 RUN pip install -r requirements.txt
 
 # copy project
-COPY entrypoint.sh .
-COPY ./src/manage.py .
-COPY ./src/api .
+COPY . /usr/src/
 
-ENTRYPOINT [ "entrypoint.sh" ]
+ENTRYPOINT [ "/usr/src/entrypoint.sh" ]
 
 FROM base as test
 
 COPY ./requirements_dev.txt /usr/src/requirements_dev.txt
 RUN pip install -r requirements_dev.txt
-COPY ./src/tests .
