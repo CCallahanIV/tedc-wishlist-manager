@@ -1,5 +1,7 @@
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
+
+from sqlalchemy import UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 
 from app import  bcrypt, db
 
@@ -11,6 +13,26 @@ https://stackoverflow.com/questions/183042/how-can-i-use-uuids-in-sqlalchemy
 
 def get_uuid():
     return str(uuid.uuid4())
+
+
+"""
+The `wishlists` table associates wishlists with users and books.
+Keys:
+    `wishlist_id`: The primary key
+    `user_id`: Foreign Key to users.id
+    `book_id`: Foreign Key to books.id
+
+Constraints:
+    Unique: Combination of `wishlist_id`, `user_id`, `book_id`. This means that, for a given user,
+            one wishlist can have one entry of a book.
+"""
+wishlists = db.Table(
+    'wishlists',
+    db.Column('wishlist_id', UUID(as_uuid=True), primary_key=True),
+    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id')),
+    db.Column('book_id', UUID(as_uuid=True), db.ForeignKey('books.id')),
+    UniqueConstraint('wishlist_id', 'user_id', 'book_id')
+)
 
 
 class User(db.Model):
@@ -84,9 +106,46 @@ class Book(db.Model):
     publication_date = db.Column(db.Date(), nullable=False)
 
 
-wishlists = db.Table(
-    'wishlists',
-    db.Column('wishlist_id', UUID(as_uuid=True), primary_key=True),
-    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id'), primary_key=True),
-    db.Column('book_id', UUID(as_uuid=True), db.ForeignKey('books.id'), primary_key=True)
-)
+def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None):
+    """
+    Insert a new entry for a wishlist. If `wishlist_id` is not specified, a new wishlist will be
+    created.
+
+    Args:
+        user_id (str): uuid for a user.
+        book_id (str): uuid for a book.
+        wishlist_id (str, optional): uuid for a wishlist, if not provided will be created.
+                                     Defaults to None.
+    """
+    if not wishlist_id:
+        wishlist_id = get_uuid()
+    values = {
+        "user_id": user_id,
+        "book_id": book_id,
+        "wishlist_id": wishlist_id
+    }
+
+    db.session.execute(
+        wishlists.insert().values(**values)
+    )
+
+    # TODO: optionally return id of newly created wishlist?
+
+
+def list_wishlist_entries(wishlist_id: str):
+    res = db.session.execute(wishlists.select().where(wishlists.c.wishlist_id == wishlist_id))
+    keys = res.keys()
+    rows = res.fetchall()
+
+    def _serialize_row(keys, row):
+        formatted_row = {}
+        for i in range(len(keys)):
+            formatted_row[keys[i]] = str(row[i])
+        return formatted_row
+
+    return [_serialize_row(keys, row) for row in rows]
+
+
+def remove_wishlist_entry(wishlist_id: str, book_id: str):
+    pass
+

@@ -3,7 +3,7 @@ import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import Book, get_uuid, User, wishlists
+from app.models import Book, get_uuid, User, wishlists, insert_wishlist_entry, list_wishlist_entries
 from conftest import BOOK_1, USER_1
 
 
@@ -102,6 +102,23 @@ def test_create_book_no_optional_fields(test_client, test_db):
     _test_book(test_book, test_db)
 
 
-def test_wishlists(test_client, test_db):
+def test_insert_wishlist_entry_new_wishlist(test_client, test_db):
+    user = User.query.get(USER_1["id"])
+    book = Book.query.first()
+    insert_wishlist_entry(
+        user_id=str(user.id),
+        book_id=str(book.id),
+    )
+    res = test_db.session.execute(wishlists.select())
+    raw_rows = res.fetchall()
+    assert len(raw_rows) == 1
+    created_wishlist_id = str(raw_rows[0][0])
+    wishlist_entries = list_wishlist_entries(created_wishlist_id)
+    assert len(wishlist_entries) == 1
+    wishlist_entry = wishlist_entries[0]
     import pdb;pdb.set_trace()
-    assert "lol"
+    assert wishlist_entry["wishlist_id"] == created_wishlist_id
+
+
+def test_insert_fails_for_missing_relation(test_client, test_db):
+    pass
