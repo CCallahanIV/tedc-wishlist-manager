@@ -69,10 +69,10 @@ class Book(db.Model):
         unique=True,
         nullable=False
     )
-    title = db.Column(db.String(255))
+    title = db.Column(db.String(255), nullable=False)
     author = db.Column(db.String(80))
     # ISBN's are currently 13 digits in length, why not leave a smidge of extra space since they have
     # increased in length in the past.
     # https://en.wikipedia.org/wiki/International_Standard_Book_Number
     isbn = db.Column(db.String(20), nullable=False)
-    publication_date = db.Column(db.Date())
+    publication_date = db.Column(db.Date(), nullable=False)
