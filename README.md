@@ -1,6 +1,13 @@
 # interview-zonar
 zonar take home interview
 
+# Resources:
+
+1. Flask/Docker/Postgres Infrastructure
+    https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx/#docker
+
+2. Flask Application structure and testing
+    http://www.patricksoftwareblog.com/
 
 # Questions:
 1. I've created a private github repo for this and can share it with anyone who needs to see it. Is there a time by which the solution should be submitted?
@@ -14,17 +21,8 @@ zonar take home interview
 # Assumptions:
 
 # TODO:
-1. Setup DB and first models
-    - [x] postgresql via docker-compose
-    - [x] Flask-SQLAlchemy
-    - [x] User model
-    - [x] Book model
-2. Setup Wishlist model/table [depends on answers to above questions]
+1. Setup Wishlist model/table [depends on answers to above questions]
 3. Setup Wishlist endpoints
-4. ~~Dockerize Flask App~~
-5. docker-compose entire application
-    - [ ] Entrypoint scripts
-    - [ ] Seed db
-6. Write Up
-7. Create "dev" vs. "prod" configurations
-8. Linting with black
+4. Write Up
+5. Create "dev" vs. "prod" configurations
+6. Linting with black

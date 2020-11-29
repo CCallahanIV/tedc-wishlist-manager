@@ -27,6 +27,12 @@ class User(db.Model):
     last_name = db.Column(db.String(80))
     email = db.Column(db.String(80), nullable=False)
     password = db.Column(db.Binary(60), nullable=False)
+    wishlists = db.relationship(
+        'Book',
+        secondary='wishlists',
+        lazy='subquery',
+        backref=db.backref('wishlists', lazy=True)
+    )
 
     def __init__(
         self,
@@ -61,7 +67,7 @@ class Book(db.Model):
     __tablename__ = "books"
 
     # Alternatively, we could potentially use the ISBN as a primary key since that is supposed to be
-    # unique across books.
+    # unique across books, maybe not unique across editions?
     id = db.Column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -76,3 +82,11 @@ class Book(db.Model):
     # https://en.wikipedia.org/wiki/International_Standard_Book_Number
     isbn = db.Column(db.String(20), nullable=False)
     publication_date = db.Column(db.Date(), nullable=False)
+
+
+wishlists = db.Table(
+    'wishlists',
+    db.Column('wishlist_id', UUID(as_uuid=True), primary_key=True),
+    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id'), primary_key=True),
+    db.Column('book_id', UUID(as_uuid=True), db.ForeignKey('books.id'), primary_key=True)
+)

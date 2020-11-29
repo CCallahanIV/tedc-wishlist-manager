@@ -3,8 +3,8 @@ import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import User, Book
-from conftest import USER_1
+from app.models import Book, get_uuid, User, wishlists
+from conftest import BOOK_1, USER_1
 
 
 """
@@ -102,7 +102,6 @@ def test_create_book_no_optional_fields(test_client, test_db):
     _test_book(test_book, test_db)
 
 
-def test_book_missing_required_param_raises(test_client, test_db):
-    with pytest.raises(IntegrityError):
-        test_db.session.add(Book(author="Whoops!"))
-        test_db.session.commit()
+def test_wishlists(test_client, test_db):
+    import pdb;pdb.set_trace()
+    assert "lol"

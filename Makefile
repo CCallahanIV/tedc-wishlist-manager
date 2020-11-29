@@ -14,7 +14,7 @@ build:
 run: run-db run-api
 
 run-api:
-	docker-compose up api
+	docker-compose up --build api
 
 run-db:
 	docker-compose up -d db

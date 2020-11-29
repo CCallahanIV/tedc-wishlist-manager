@@ -1,12 +1,21 @@
+from datetime import date
+
 import pytest
 
 from app import create_app, db
-from app.models import get_uuid, User
+from app.models import get_uuid, Book, User
 
 """
 Reference for structuring tests:
 https://www.patricksoftwareblog.com/testing-a-flask-application-using-pytest/
 """
+
+BOOK_1 = {
+    "title": "Chicken Soup for the Soul 20th Anniversary Edition",
+    "author": "Jack Canfield, Mark Victor Hansen, Amy Newmark",
+    "isbn": "978-1611599138",
+    "publication_date": date(2013, 6, 25)
+}
 
 USER_1 = {
     "id": get_uuid(),
@@ -34,8 +43,10 @@ def test_client():
 def test_db():
     db.create_all()
 
-    user1 = User(**USER_1)
-    db.session.add(user1)
+    user_1 = User(**USER_1)
+    book_1 = Book(**BOOK_1)
+    db.session.add(user_1)
+    db.session.add(book_1)
     db.session.commit()
     
     yield db
