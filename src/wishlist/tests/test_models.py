@@ -3,7 +3,15 @@ import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import Book, get_uuid, User, wishlists, insert_wishlist_entry, list_wishlist_entries
+from app.models import (
+    Book,
+    get_uuid,
+    insert_wishlist_entry,
+    list_wishlist_entries,
+    remove_wishlist_entry,
+    User,
+    wishlists
+)
 from conftest import BOOK_1, USER_1
 
 
@@ -112,13 +120,170 @@ def test_insert_wishlist_entry_new_wishlist(test_client, test_db):
     res = test_db.session.execute(wishlists.select())
     raw_rows = res.fetchall()
     assert len(raw_rows) == 1
-    created_wishlist_id = str(raw_rows[0][0])
+    created_wishlist_id = raw_rows[0][0]
     wishlist_entries = list_wishlist_entries(created_wishlist_id)
-    assert len(wishlist_entries) == 1
-    wishlist_entry = wishlist_entries[0]
-    import pdb;pdb.set_trace()
-    assert wishlist_entry["wishlist_id"] == created_wishlist_id
+    assert len(wishlist_entries["books"]) == 1
+    assert wishlist_entries["wishlist_id"] == created_wishlist_id
 
 
-def test_insert_fails_for_missing_relation(test_client, test_db):
-    pass
+def test_insert_wishlist_entry_existing_wishlist(test_client, test_db):
+    user = User.query.get(USER_1["id"])
+    books = Book.query.all()
+    new_wishlist_id = get_uuid()
+    book_ids = set()
+    for book in books:
+        new_wishlist = insert_wishlist_entry(
+            user_id=user.id,
+            book_id=book.id,
+            wishlist_id=new_wishlist_id
+        )
+        book_ids.add(book.id)
+    res = test_db.session.execute(
+        wishlists.select().where(wishlists.c.wishlist_id == new_wishlist_id)
+    )
+    rows = res.fetchall()
+    assert len(rows) == 3
+    wishlist_book_ids = {row[2] for row in rows}
+    assert book_ids == wishlist_book_ids
+
+
+def test_insert_repeat_entry(test_client, test_db):
+    user = User.query.get(USER_1["id"])
+    book = Book.query.first()
+    new_wishlist_id = get_uuid()
+    insert_wishlist_entry(
+        user_id=user.id,
+        book_id=book.id,
+        wishlist_id=new_wishlist_id
+    )
+    with pytest.raises(IntegrityError) as exc_info:
+        insert_wishlist_entry(
+            user_id=user.id,
+            book_id=book.id,
+            wishlist_id=new_wishlist_id
+        )
+    test_db.session.close()
+    assert "UniqueViolation" in str(exc_info.value)
+
+
+def test_insert_fails_for_missing_book_id(test_client, test_db):
+    user = User.query.get(USER_1["id"])
+    non_existent_book_id = get_uuid()
+    new_wishlist_id = get_uuid()
+    with pytest.raises(IntegrityError) as exc_info:
+        insert_wishlist_entry(
+            user_id=user.id,
+            book_id=non_existent_book_id,
+            wishlist_id=new_wishlist_id
+        )
+    test_db.session.close()
+    assert "ForeignKeyViolation" in str(exc_info.value)
+
+
+def test_insert_fails_for_missing_user_id(test_client, test_db):
+    book = Book.query.first()
+    non_existent_user_id = get_uuid()
+    new_wishlist_id = get_uuid()
+    with pytest.raises(IntegrityError) as exc_info:
+        insert_wishlist_entry(
+            user_id=non_existent_user_id,
+            book_id=book.id,
+            wishlist_id=new_wishlist_id
+        )
+    test_db.session.close()
+    assert "ForeignKeyViolation" in str(exc_info.value)
+
+
+def test_list_wishlist_entries_format(test_client, test_db):
+    user = User.query.get(USER_1["id"])
+    book = Book.query.first()
+    new_wishlist_id = get_uuid()
+    insert_wishlist_entry(
+        user_id=user.id,
+        book_id=book.id,
+        wishlist_id=new_wishlist_id
+    )
+    res = list_wishlist_entries(new_wishlist_id)
+    # First, we'll check the format of that wishlist object and that we have the expected number of
+    # results
+    for key in ("books", "wishlist_id", "user_id"):
+        assert key in res
+    assert len(res) == 3
+    assert len(res["books"]) == 1
+
+    book_response = res["books"][0]
+    # Next, we'll check the format of the nested book object
+    for key in ("id", "isbn", "publication_date", "title", "author"):
+        assert key in book_response
+
+
+def test_list_wishlist_entries_non_existent_wishlist(test_client, test_db):
+    new_wishlist_id = get_uuid()
+    res = list_wishlist_entries(new_wishlist_id)
+    assert res is None
+
+
+def test_list_wishlist_entries_multiple_wishlists(test_client, test_db):
+    wishlist_id_1 = get_uuid()
+    wishlist_id_2 = get_uuid()
+    books = Book.query.all()
+    user = User.query.first()
+    wishlist_1_books = books[:1]
+    wishlist_2_books = books[1:]
+    
+    # Create first wishlist
+    for book in wishlist_1_books:
+        insert_wishlist_entry(
+            user_id=user.id,
+            book_id=book.id,
+            wishlist_id=wishlist_id_1
+        )
+    
+    # create second wishlist
+    for book in wishlist_2_books:
+        insert_wishlist_entry(
+            user_id=user.id,
+            book_id=book.id,
+            wishlist_id=wishlist_id_2
+        )
+    
+    wishlist_res_1 = list_wishlist_entries(wishlist_id_1)
+    wishlist_res_2 = list_wishlist_entries(wishlist_id_2)
+    
+    assert len(wishlist_res_1["books"]) == len(wishlist_1_books)
+    assert len(wishlist_res_2["books"]) == len(wishlist_2_books)
+
+    wishlist_res_1_book_ids = {book["id"] for book in wishlist_res_1["books"]}
+    wishlist_res_2_book_ids = {book["id"] for book in wishlist_res_2["books"]}
+
+    # Let's make sure we have no overlap in book ids because we split the books across wishlists.
+    assert bool(wishlist_res_1_book_ids & wishlist_res_2_book_ids) is False
+
+
+def test_remove_wishlist_entry(test_client, test_db):
+    user = User.query.get(USER_1["id"])
+    books = Book.query.all()
+    new_wishlist_id = get_uuid()
+    book_to_remove = books[0]
+    for book in books:
+        new_wishlist = insert_wishlist_entry(
+            user_id=user.id,
+            book_id=book.id,
+            wishlist_id=new_wishlist_id
+        )
+    remove_wishlist_entry(new_wishlist_id, book_to_remove.id)
+
+    # refetch wishlist to make sure the book isn't there anymore
+    res = list_wishlist_entries(new_wishlist_id)
+    book_ids_after_removal = {book["id"] for book in res["books"]}
+    assert book_to_remove.id not in book_ids_after_removal
+
+
+def test_remove_nonexistent_wishlist_entry(test_client, test_db):
+    """At this time, nothing bad should happen. In the future, we could return an error if there is
+    an attempt to delete a wishlist entry that doesn't exist.
+    """
+    new_wishlist_id = get_uuid()
+    new_book_id = get_uuid()
+    remove_wishlist_entry(new_wishlist_id, new_book_id)
+    assert True

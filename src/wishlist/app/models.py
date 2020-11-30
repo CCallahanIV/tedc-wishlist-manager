@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql import text
 
 from app import  bcrypt, db
 
@@ -17,21 +18,20 @@ def get_uuid():
 
 """
 The `wishlists` table associates wishlists with users and books.
-Keys:
-    `wishlist_id`: The primary key
+Columns:
+    `wishlist_id`: uuid for a single wishlist instance
     `user_id`: Foreign Key to users.id
     `book_id`: Foreign Key to books.id
 
-Constraints:
-    Unique: Combination of `wishlist_id`, `user_id`, `book_id`. This means that, for a given user,
-            one wishlist can have one entry of a book.
+Primary Key:
+    Composite key across all three columns to ensure that, for a single user, a single wishlist, can
+    have only one instance of a book.
 """
 wishlists = db.Table(
     'wishlists',
     db.Column('wishlist_id', UUID(as_uuid=True), primary_key=True),
-    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id')),
-    db.Column('book_id', UUID(as_uuid=True), db.ForeignKey('books.id')),
-    UniqueConstraint('wishlist_id', 'user_id', 'book_id')
+    db.Column('user_id', UUID(as_uuid=True), db.ForeignKey('users.id'), primary_key=True),
+    db.Column('book_id', UUID(as_uuid=True), db.ForeignKey('books.id'), primary_key=True)
 )
 
 
@@ -84,6 +84,9 @@ class User(db.Model):
         """
         return bcrypt.check_password_hash(self.password, candidate_password)
 
+    def __repr__(self):
+        return f"<User {self.email}>"
+
 
 class Book(db.Model):
     __tablename__ = "books"
@@ -104,6 +107,9 @@ class Book(db.Model):
     # https://en.wikipedia.org/wiki/International_Standard_Book_Number
     isbn = db.Column(db.String(20), nullable=False)
     publication_date = db.Column(db.Date(), nullable=False)
+
+    def __repr__(self):
+        return f"<Book {self.title}>"
 
 
 def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None):
@@ -128,24 +134,64 @@ def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None):
     db.session.execute(
         wishlists.insert().values(**values)
     )
-
-    # TODO: optionally return id of newly created wishlist?
+    return values
 
 
 def list_wishlist_entries(wishlist_id: str):
-    res = db.session.execute(wishlists.select().where(wishlists.c.wishlist_id == wishlist_id))
+    """Get the wishlist and entries for the given wishlist_id.
+
+    Args:
+        wishlist_id (str): uuid for a wishlist
+
+    Returns:
+        None:   No wishlist was found for given wishlist_id
+        (dict): Dictionary composed of wishlist_id, user_id, and the complete book models.
+    """
+    query = text(
+        """
+            SELECT wishlist_id, user_id, id, title, author, isbn, publication_date
+            FROM wishlists JOIN books
+            ON book_id = id
+            WHERE wishlist_id = :wishlist_id
+        """
+    )
+    res = db.session.execute(
+        query, {"wishlist_id": wishlist_id}
+    )
     keys = res.keys()
     rows = res.fetchall()
+
+    if not rows:
+        # No wishlist for given wishlist_id, shortcut out.
+        return
 
     def _serialize_row(keys, row):
         formatted_row = {}
         for i in range(len(keys)):
-            formatted_row[keys[i]] = str(row[i])
+            formatted_row[keys[i]] = row[i]
         return formatted_row
 
-    return [_serialize_row(keys, row) for row in rows]
+    results = {
+        "wishlist_id": rows[0][0], # For first row, take value of 0th column `wishlist_id`
+        "user_id": rows[0][1], # For first row, take value of 1th column `user_id`
+        "books": [
+            _serialize_row(keys[2:], row[2:]) for row in rows
+        ]
+    }
+    return results
 
 
 def remove_wishlist_entry(wishlist_id: str, book_id: str):
-    pass
+    """Remove a wishlist entry for a given wishlist_id and book_id. Will not raise if there is no
+    entry to delete.
 
+    Args:
+        wishlist_id (str): uuid of a wishlist
+        book_id (str): uuid of a book
+    """
+    res = db.session.execute(
+        wishlists.\
+            delete().\
+                where(wishlists.c.wishlist_id == wishlist_id).\
+                where(wishlists.c.book_id == book_id)
+    )
