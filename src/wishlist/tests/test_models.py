@@ -1,8 +1,9 @@
 import datetime
 
 import pytest
-from sqlalchemy.exc import IntegrityError
 
+
+from conftest import BOOK_1, USER_1
 from app.models import (
     Book,
     get_uuid,
@@ -12,7 +13,12 @@ from app.models import (
     User,
     wishlists
 )
-from conftest import BOOK_1, USER_1
+from app.models.exceptions import (
+    BookNotFound,
+    UserNotFound,
+    WishlistEntryAlreadyExists,
+    WishlistNotFound
+)
 
 
 """
@@ -156,42 +162,39 @@ def test_insert_repeat_entry(test_client, test_db):
         book_id=book.id,
         wishlist_id=new_wishlist_id
     )
-    with pytest.raises(IntegrityError) as exc_info:
+    with pytest.raises(WishlistEntryAlreadyExists):
         insert_wishlist_entry(
             user_id=user.id,
             book_id=book.id,
             wishlist_id=new_wishlist_id
         )
     test_db.session.close()
-    assert "UniqueViolation" in str(exc_info.value)
 
 
 def test_insert_fails_for_missing_book_id(test_client, test_db):
     user = User.query.get(USER_1["id"])
     non_existent_book_id = get_uuid()
     new_wishlist_id = get_uuid()
-    with pytest.raises(IntegrityError) as exc_info:
+    with pytest.raises(BookNotFound):
         insert_wishlist_entry(
             user_id=user.id,
             book_id=non_existent_book_id,
             wishlist_id=new_wishlist_id
         )
     test_db.session.close()
-    assert "ForeignKeyViolation" in str(exc_info.value)
 
 
 def test_insert_fails_for_missing_user_id(test_client, test_db):
     book = Book.query.first()
     non_existent_user_id = get_uuid()
     new_wishlist_id = get_uuid()
-    with pytest.raises(IntegrityError) as exc_info:
+    with pytest.raises(UserNotFound):
         insert_wishlist_entry(
             user_id=non_existent_user_id,
             book_id=book.id,
             wishlist_id=new_wishlist_id
         )
     test_db.session.close()
-    assert "ForeignKeyViolation" in str(exc_info.value)
 
 
 def test_list_wishlist_entries_format(test_client, test_db):
@@ -219,8 +222,9 @@ def test_list_wishlist_entries_format(test_client, test_db):
 
 def test_list_wishlist_entries_non_existent_wishlist(test_client, test_db):
     new_wishlist_id = get_uuid()
-    res = list_wishlist_entries(new_wishlist_id)
-    assert res is None
+    with pytest.raises(WishlistNotFound):
+        list_wishlist_entries(new_wishlist_id)
+    test_db.session.close()
 
 
 def test_list_wishlist_entries_multiple_wishlists(test_client, test_db):
@@ -230,7 +234,7 @@ def test_list_wishlist_entries_multiple_wishlists(test_client, test_db):
     user = User.query.first()
     wishlist_1_books = books[:1]
     wishlist_2_books = books[1:]
-    
+
     # Create first wishlist
     for book in wishlist_1_books:
         insert_wishlist_entry(
@@ -238,7 +242,7 @@ def test_list_wishlist_entries_multiple_wishlists(test_client, test_db):
             book_id=book.id,
             wishlist_id=wishlist_id_1
         )
-    
+
     # create second wishlist
     for book in wishlist_2_books:
         insert_wishlist_entry(
@@ -246,10 +250,10 @@ def test_list_wishlist_entries_multiple_wishlists(test_client, test_db):
             book_id=book.id,
             wishlist_id=wishlist_id_2
         )
-    
+
     wishlist_res_1 = list_wishlist_entries(wishlist_id_1)
     wishlist_res_2 = list_wishlist_entries(wishlist_id_2)
-    
+
     assert len(wishlist_res_1["books"]) == len(wishlist_1_books)
     assert len(wishlist_res_2["books"]) == len(wishlist_2_books)
 

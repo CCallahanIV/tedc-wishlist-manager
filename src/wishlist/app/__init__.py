@@ -3,7 +3,6 @@ from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
 from app.config import Config
-from app.routes import bp
 
 
 # Initialize extensions, at this point they are not attached to the application.
@@ -20,6 +19,8 @@ def create_app() -> Flask:
     """
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+    from app.routes import bp
     app.register_blueprint(bp)
 
     # Explanation for initializing database in this way:

@@ -17,6 +17,13 @@ BOOK_1 = {
     "publication_date": date(2013, 6, 25)
 }
 
+BOOK_2 = {
+    "title": "Python for Dummies",
+    "author": "John Paul Mueller",
+    "isbn": "9781118891452",
+    "publication_date": date(2014, 9, 1)
+}
+
 USER_1 = {
     "id": get_uuid(),
     "email": "fredr@neighborhood.com",

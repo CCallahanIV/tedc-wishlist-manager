@@ -2,9 +2,16 @@ import uuid
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import text
 
-from app import  bcrypt, db
+from app import bcrypt, db
+from app.models.exceptions import (
+    BookNotFound,
+    UserNotFound,
+    WishlistNotFound,
+    WishlistEntryAlreadyExists
+)
 
 """
 Resource for how to use UUIDs as Primary Keys:
@@ -26,6 +33,15 @@ Columns:
 Primary Key:
     Composite key across all three columns to ensure that, for a single user, a single wishlist, can
     have only one instance of a book.
+
+A quick note about scaling. The composite primary key here, while making the relationships between
+entities relatively simple, does not provide us any efficiency in querying. When we query for a
+wishlist's contents, we search by `wishlist_id` which will result in a table scan.
+
+Two proposed options to handle issues of scale:
+1. Modify table schema or create an index on `wishlist_id`
+2. If we expect the contents of a wishlist to rarely change, cache the results of the
+    GET `/wishlists` call.
 """
 wishlists = db.Table(
     'wishlists',
@@ -112,7 +128,7 @@ class Book(db.Model):
         return f"<Book {self.title}>"
 
 
-def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None):
+def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None) -> dict:
     """
     Insert a new entry for a wishlist. If `wishlist_id` is not specified, a new wishlist will be
     created.
@@ -130,14 +146,29 @@ def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None):
         "book_id": book_id,
         "wishlist_id": wishlist_id
     }
+    try:
+        db.session.execute(
+            wishlists.insert().values(**values)
+        )
+    except IntegrityError as e:
+        err_msg = str(e)
+        if "ForeignKeyViolation" in err_msg:
+            if "wishlists_book_id_fkey" in err_msg:
+                raise BookNotFound("Given book does not exist.")
+            if "wishlists_user_id_fkey" in err_msg:
+                raise UserNotFound("Given user does not exist.")
+        
+        if "UniqueViolation" in err_msg:
+            # Cannot re-insert an existing wishlist entry
+            raise WishlistEntryAlreadyExists("Wishlist entry already exists.")
+        
+        # Fallback: we can't handle this error, so raise.
+        raise e
 
-    db.session.execute(
-        wishlists.insert().values(**values)
-    )
     return values
 
 
-def list_wishlist_entries(wishlist_id: str):
+def list_wishlist_entries(wishlist_id: str) -> dict:
     """Get the wishlist and entries for the given wishlist_id.
 
     Args:
@@ -163,7 +194,7 @@ def list_wishlist_entries(wishlist_id: str):
 
     if not rows:
         # No wishlist for given wishlist_id, shortcut out.
-        return
+        raise WishlistNotFound("No wishlist entries for given `wishlist_id`")
 
     def _serialize_row(keys, row):
         formatted_row = {}
