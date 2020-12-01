@@ -21,8 +21,6 @@ zonar take home interview
 # Assumptions:
 
 # TODO:
-1. Setup Wishlist model/table [depends on answers to above questions]
-3. Setup Wishlist endpoints
-4. Write Up
-5. Create "dev" vs. "prod" configurations
-6. Linting with black
+1. Write Up
+2. Create "dev" vs. "prod" configurations
+3. Linting with black
