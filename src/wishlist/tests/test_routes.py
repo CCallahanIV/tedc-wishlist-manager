@@ -13,20 +13,6 @@ from app.models import (
 from conftest import USER_1, BOOK_1, BOOK_2
 
 
-# @pytest.fixture(scope="function")
-# def functional_test_client():
-#     flask_app = create_app()
-#     db.create_all()
-#     db.session.add(User(**USER_1))
-#     db.session.add(Book(**BOOK_1))
-#     db.session.add(Book(**BOOK_2))
-#     db.session.commit()
-#     with flask_app.test_client() as test_client:
-#         yield test_client
-#     db.session.close()
-#     db.drop_all()
-
-
 def test_healthcheck(test_client):
     res = test_client.get("/")
     assert res.status_code == 200
