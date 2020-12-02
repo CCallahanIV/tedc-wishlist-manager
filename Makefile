@@ -1,15 +1,4 @@
-.PHONY: build run run-api test down clean
-
-venv_dir := venv
-python := $(venv_dir)/bin/python
-pip := $(venv_dir)/bin/pip
-flask := $(venv_dir)/bin/flask
-
-
-build:
-	python3 -m venv venv
-	$(pip) install --no-cache -r requirements.txt
-	touch .build
+.PHONY: run run-api run-db test clean
 
 run: run-db run-api
 
@@ -19,6 +8,10 @@ run-api:
 run-db:
 	docker-compose up -d db
 
+shell-db:
+	# username and dbname values are hardcoded based on values in environment file
+	docker-compose exec db psql --username=dev --dbname=app_dev
+
 test:
 	# TODO: How to clean up all containers on a failed test run?
 	docker-compose build api-test
@@ -27,6 +20,3 @@ test:
 
 down:
 	docker-compose down -v
-
-clean: down
-	rm -rf $(venv_dir)

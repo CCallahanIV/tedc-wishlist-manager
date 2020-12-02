@@ -134,6 +134,3 @@ dmypy.json
 # build artifacts
 .build
 .run-db
-
-# ENV files
-.env*

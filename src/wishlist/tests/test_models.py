@@ -3,7 +3,7 @@ import datetime
 import pytest
 
 
-from conftest import BOOK_1, USER_1
+from data import BOOK_1, BOOK_2, USER_1
 from app.models import (
     Book,
     get_uuid,
@@ -134,22 +134,22 @@ def test_insert_wishlist_entry_new_wishlist(test_client, test_db):
 
 def test_insert_wishlist_entry_existing_wishlist(test_client, test_db):
     user = User.query.get(USER_1["id"])
-    books = Book.query.all()
+    books = [BOOK_1, BOOK_2]
     new_wishlist_id = get_uuid()
     book_ids = set()
     for book in books:
         new_wishlist = insert_wishlist_entry(
             user_id=user.id,
-            book_id=book.id,
+            book_id=book["id"],
             wishlist_id=new_wishlist_id
         )
-        book_ids.add(book.id)
+        book_ids.add(book["id"])
     res = test_db.session.execute(
         wishlists.select().where(wishlists.c.wishlist_id == new_wishlist_id)
     )
     rows = res.fetchall()
-    assert len(rows) == 3
-    wishlist_book_ids = {row[2] for row in rows}
+    assert len(rows) == 2
+    wishlist_book_ids = {str(row[2]) for row in rows}
     assert book_ids == wishlist_book_ids
 
 

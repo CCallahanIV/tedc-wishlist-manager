@@ -1,6 +1,7 @@
+from copy import deepcopy
+
 import pytest
 
-# from app import create_app, db
 from app.models import (
     Book,
     get_uuid,
@@ -10,7 +11,7 @@ from app.models import (
     wishlists,
     User
 )
-from conftest import USER_1, BOOK_1, BOOK_2
+from data import USER_1, BOOK_1, BOOK_2
 
 
 def test_healthcheck(test_client):
@@ -110,15 +111,12 @@ def test_wishlist_entry_raises_400(payload, method, exp_msg_fragment, test_clien
 
 def test_create_wishlist_entry_no_wishlist(test_client, test_db):
     user = User(email="joe@schmoe.com", raw_password="superS3cr3t")
-    book_1 = Book(**BOOK_1)
-    book_2 = Book(**BOOK_2)
-    test_db.session.add_all([user, book_1, book_2])
+    test_db.session.add(user)
     test_db.session.commit()
-
     res = test_client.post(
         "/wishlist_entry",
         json={
-            "book_id": book_1.id,
+            "book_id": BOOK_1["id"],
             "user_id": user.id,
         }
     )
@@ -128,7 +126,7 @@ def test_create_wishlist_entry_no_wishlist(test_client, test_db):
     res2 = test_client.post(
         "/wishlist_entry",
         json={
-            "book_id": book_2.id,
+            "book_id": BOOK_2["id"],
             "user_id": user.id,
             "wishlist_id": new_wishlist_id
         }
@@ -138,18 +136,15 @@ def test_create_wishlist_entry_no_wishlist(test_client, test_db):
 
 def test_create_and_retrieve_wishlist(test_client, test_db):
     user = User(email="joe@schmoe.com", raw_password="superS3cr3t")
-    book_1 = Book(**BOOK_1)
-    book_2 = Book(**BOOK_2)
-    test_db.session.add_all([user, book_1, book_2])
+    test_db.session.add(user)
     test_db.session.commit()
-
     wishlist_id = get_uuid()
 
-    for book in [book_1, book_2]:
+    for book in [BOOK_1, BOOK_2]:
         res = test_client.post(
             "/wishlist_entry",
             json={
-                "book_id": book.id,
+                "book_id": book["id"],
                 "user_id": user.id,
                 "wishlist_id": wishlist_id
             }
@@ -165,18 +160,16 @@ def test_create_and_retrieve_wishlist(test_client, test_db):
 
 def test_remove_wishlist_entry(test_client, test_db):
     user = User(email="joe@schmoe.com", raw_password="superS3cr3t")
-    book_1 = Book(**BOOK_1)
-    book_2 = Book(**BOOK_2)
-    test_db.session.add_all([user, book_1, book_2])
+    test_db.session.add(user)
     test_db.session.commit()
 
     wishlist_id = get_uuid()
 
-    for book in [book_1, book_2]:
+    for book in [BOOK_1, BOOK_2]:
         res = test_client.post(
             "/wishlist_entry",
             json={
-                "book_id": book.id,
+                "book_id": book["id"],
                 "user_id": user.id,
                 "wishlist_id": wishlist_id
             }
@@ -190,7 +183,7 @@ def test_remove_wishlist_entry(test_client, test_db):
     res_delete = test_client.delete(
         "/wishlist_entry",
         json={
-            "book_id": book_1.id,
+            "book_id": BOOK_1["id"],
             "wishlist_id": wishlist_id
         }
     )

@@ -64,7 +64,7 @@ class User(db.Model):
     first_name = db.Column(db.String(80))
     last_name = db.Column(db.String(80))
     email = db.Column(db.String(80), nullable=False)
-    password = db.Column(db.Binary(60), nullable=False)
+    password = db.Column(db.LargeBinary(60), nullable=False)
     wishlists = db.relationship(
         'Book',
         secondary='wishlists',
@@ -150,6 +150,7 @@ def insert_wishlist_entry(user_id: str, book_id: str, wishlist_id: str = None) -
         db.session.execute(
             wishlists.insert().values(**values)
         )
+        db.session.commit()
     except IntegrityError as e:
         err_msg = str(e)
         if "ForeignKeyViolation" in err_msg:

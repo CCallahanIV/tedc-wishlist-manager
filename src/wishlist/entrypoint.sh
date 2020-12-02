@@ -11,6 +11,12 @@ then
     echo "PostgreSQL started"
 fi
 
+echo "Creating DB"
 python manage.py create_db
+if [ "$IS_TEST" != "true" ]
+then
+    echo "Seeding DB"
+    python manage.py seed_db
+fi
 
 exec "$@"

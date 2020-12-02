@@ -74,7 +74,8 @@ def handle_wishlist_entry():
         required_keys = ["book_id", "user_id"]
         optional_keys = ["wishlist_id"]
         payload = request.json
-
+        if not payload:
+            return f"missing required keys: {required_keys}", 400
         if (exc := _validate_payload(payload, required_keys, optional_keys=optional_keys)) is not None:
             return exc, 400
 
