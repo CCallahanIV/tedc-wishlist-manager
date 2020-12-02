@@ -82,43 +82,43 @@ To connect to the database while running:
 Create a wishlist entry:
     `curl -X POST localhost:5000/wishlist_entry -d '{"book_id": "dfe3157b-b402-4104-a0eb-e54bee1210f0", "user_id": "46bd51f9-e20b-4b4f-b5a7-f25339a34906"}' -H 'Content-Type:application/json'`
 
-    Example Successful Response:
-        Status code: 201
-        `json
-            {
-                "book_id":"dfe3157b-b402-4104-a0eb-e54bee1210f0",
-                "user_id":"46bd51f9-e20b-4b4f-b5a7-f25339a34906",
-                "wishlist_id":"522f90d6-c4b9-4bcb-b4ca-72b9892d08b0"
-            }
-        `
+Example Successful Response:
+Status code: 201
+`json
+    {
+        "book_id":"dfe3157b-b402-4104-a0eb-e54bee1210f0",
+        "user_id":"46bd51f9-e20b-4b4f-b5a7-f25339a34906",
+        "wishlist_id":"522f90d6-c4b9-4bcb-b4ca-72b9892d08b0"
+    }
+`
 
 Retrieve a wishlist:
     `curl localhost:5000/wishlist/<wishlist_id>`
 
-    Example Successful Response:
-        Status Code: 200
-        `json
+Example Successful Response:
+Status Code: 200
+`json
+    {
+        "books":[
             {
-                "books":[
-                    {
-                        "author":"Jack Canfield, Mark Victor Hansen, Amy Newmark",
-                        "id":"dfe3157b-b402-4104-a0eb-e54bee1210f0",
-                        "isbn":"978-1611599138",
-                        "publication_date":"Tue, 25 Jun 2013 00:00:00 GMT",
-                        "title":"Chicken Soup for the Soul 20th Anniversary Edition"
-                    }
-                ],
-                "user_id":"46bd51f9-e20b-4b4f-b5a7-f25339a34906",
-                "wishlist_id":"f8352d41-8902-4d8b-9a57-d9e9b5bc1417"
+                "author":"Jack Canfield, Mark Victor Hansen, Amy Newmark",
+                "id":"dfe3157b-b402-4104-a0eb-e54bee1210f0",
+                "isbn":"978-1611599138",
+                "publication_date":"Tue, 25 Jun 2013 00:00:00 GMT",
+                "title":"Chicken Soup for the Soul 20th Anniversary Edition"
             }
-        `
+        ],
+        "user_id":"46bd51f9-e20b-4b4f-b5a7-f25339a34906",
+        "wishlist_id":"f8352d41-8902-4d8b-9a57-d9e9b5bc1417"
+    }
+`
 
 Delete a wishlist entry:
     `curl -X DELETE localhost:5000/wishlist_entry -d '{"wishlist_id":"<wishlist_id>", "book_id":"<book_id>"}' -H 'Content-Type:application/json'`
 
-    Example Successful Response:
-        Status Code: 200
-        `"OK"`
+Example Successful Response:
+    Status Code: 200
+    `"OK"`
 
 # Resources:
 
