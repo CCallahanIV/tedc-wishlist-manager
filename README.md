@@ -20,25 +20,36 @@ My first step was to answer the following questions:
 
 ### Decisions:
 
+0. Personal challenge: use technologies that are "production ready" or allow development with analogs of production tech (e.g. PostgreSQL vs. SQLite)
+
 1. Use a relational database.
 - We're starting from a limited set of questions about our data and aren't sure how those questions may evolve as the product grows. Personal experience with alternative NoSQL datastores such as dynamo has taught me that it in order to truly benefit from that paradigm, the questions we're asking of the data need to be thoroughly understood.
 - The data "feels" like it is relational.
   - A User can have one or many wishlists
   - A Book can belong to one or many wishlists
-  - We want to know things about those things (e.g. first_name, last_name, etc)
-- Chose PostreSQL: because it represents a fully-featured database that can serve applications at massive scale. When managed via `docker-compose` it becomes fairly simple to develop AND test against the data store
-- Alternatives: MySQL, NoSQL
+  - We want to know things about those things (e.g. first_name, last_name, title, author, etc.)
 
 2. Use a scalable web-service as an API.
 - This is a model that is very well understood across the software world - it has proven its ability to scale.
-- Chose Flask: relatively lightweight, strong community, maturity, and scalable.
-- Chose SQLAlchemy as an ORM
-- Alternatives:
+- Alternatives: Serverless architecture (e.g. Lambdas accessing database)
 
 3. Use Docker and docker-compose to orchestrate all the pieces.
 - Using containerized environments allows developers to closely emulate production environments locally.
 - docker-compose allows relatively easy orchestration of a variety of resources "off the shelf"
 - container images are deployable in a large variety of cloud computing services
+
+
+### Technologies
+
+| Technology | Why                      | Ok for Production? |
+|------------|--------------------------|--------------------|
+| Flask      | relatively lightweight, strong community, maturity, and scalable, want to learn more about it. | Yes |
+| SQLAlchemy | Plug and Play with Flask, want to learn more about it. | Yes |
+| PostgreSQL | Officially supported images available in DockerHub, fully featured DB. | Yes |
+| Docker     | Developing with containers means the dev environmet more closely matches prod, lots of options for hosting. | Yes |
+| docker-compose | Convenient means of organizing many pieces of an application locally. | Yes |
+
+Besides their technical relevance, I have a personal interest in all of these technologies because while I've supported applications based on these in production, I haven't stood up many services based on this stack together from scratch. I wanted to use this as an opportunity to learn more about using them together.
 
 
 # How To Make This "Production Ready"
@@ -49,11 +60,18 @@ My first step was to answer the following questions:
 - a production WSGI server such as gunicorn which will also allow running multiple instances of the app on a host
 - a reverse proxy such as nginx as a web server
 - configuration injected from secure remote source (e.g. AWS Secrets Manager)
+- (ADDED AFTER SUBMISSION): Consider paginating the `books` key of the `wishlist/<wishlist_id>` endpoint
 
 2. The database will need to be persisted remotely outside of the application
 
 3. As a hosting service, we could utilize something like AWS ECS to allow dynamic scaling of the API
 - would require implementing application load balancers (ALBs) as well as networking, routing, and certificate signing (HTTPS)
+
+4. Operationally, CI/CD, logging, alerting and monitoring will need to be implemented
+- Automated build of container images, push to repository, deploy from repository
+- logging including request ids for debugging
+- monitor system health and performance (start with golden four: Latency, Traffic, Errors, Saturation)
+- actionable alerts for alarms/errors (need playbook with rollback instructions)
 
 ## Potential Future Scaling Solutions:
 
@@ -79,25 +97,36 @@ To connect to the database while running:
 ## Example API calls:
 (After running `make run`; all calls are based on seeded data in the db)
 
+Seed data can be found in `./src/wishlist/tests/data.py`
+
 Create a wishlist entry:
-    `curl -X POST localhost:5000/wishlist_entry -d '{"book_id": "dfe3157b-b402-4104-a0eb-e54bee1210f0", "user_id": "46bd51f9-e20b-4b4f-b5a7-f25339a34906"}' -H 'Content-Type:application/json'`
+```sh
+curl -X POST localhost:5000/wishlist_entry -d '{"book_id": "dfe3157b-b402-4104-a0eb-e54bee1210f0", "user_id": "46bd51f9-e20b-4b4f-b5a7-f25339a34906"}' -H 'Content-Type:application/json'
+```
 
 Example Successful Response:
+
 Status code: 201
-`json
+
+```json
     {
         "book_id":"dfe3157b-b402-4104-a0eb-e54bee1210f0",
         "user_id":"46bd51f9-e20b-4b4f-b5a7-f25339a34906",
         "wishlist_id":"522f90d6-c4b9-4bcb-b4ca-72b9892d08b0"
     }
-`
+```
 
 Retrieve a wishlist:
-    `curl localhost:5000/wishlist/<wishlist_id>`
+
+```sh
+curl localhost:5000/wishlist/<wishlist_id>
+```
 
 Example Successful Response:
+
 Status Code: 200
-`json
+
+```json
     {
         "books":[
             {
@@ -111,14 +140,17 @@ Status Code: 200
         "user_id":"46bd51f9-e20b-4b4f-b5a7-f25339a34906",
         "wishlist_id":"f8352d41-8902-4d8b-9a57-d9e9b5bc1417"
     }
-`
+```
 
 Delete a wishlist entry:
-    `curl -X DELETE localhost:5000/wishlist_entry -d '{"wishlist_id":"<wishlist_id>", "book_id":"<book_id>"}' -H 'Content-Type:application/json'`
+
+```sh
+curl -X DELETE localhost:5000/wishlist_entry -d '{"wishlist_id":"<wishlist_id>", "book_id":"<book_id>"}' -H 'Content-Type:application/json'`
+```
 
 Example Successful Response:
-    Status Code: 200
-    `"OK"`
+
+Status Code: 200, `"OK"`
 
 # Resources:
 
